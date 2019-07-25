@@ -1,6 +1,9 @@
 # engbot
 A simple discord bot.
 
+## Add engbot to your server!
+https://discordapp.com/oauth2/authorize?client_id=603484086522085376&scope=bot&permissions=3072&fbclid=IwAR30EnvNDpHxgnhELDmY7HV2Fy0OLZjcVtwAXbp3QnOscOr46rPZ85BGYlQ
+
 ## Features
 ### Teamfight Tactics: 
 * ```random``` Generates a random team composition from all the permutations of the classes and origins.
