@@ -9,4 +9,8 @@ A simple discord bot.
 ### For fun:
 * ```uwu``` uwu-fies a message.
 
-### Movies: (soon)
+### Movies (powered by TMDB):
+* ```movie``` Shows the year, rating, and synopsis of queried movie.
+* ```recommend``` Shows 5 other recommendations based on the queried movie.
+* ```cast``` Shows the 5 leading actors / actresses in queried movie.
+* ```director``` Shows the director and 5 of the director's other films in queried movie.
