@@ -72,9 +72,11 @@ client.on('message', message => {
 
     if(message.content.startsWith(`${prefix}rank`)){
         //source of data from Riot Games API
+        const embed = new Discord.RichEmbed();
 
         var rank_images = {bronze: "https://i.imgur.com/HvxwGJf.png", challenger: "https://i.imgur.com/MiTQa19.png", diamond: "https://i.imgur.com/bOMBA1x.png", gold: "https://i.imgur.com/snwSOU5.png", grandmaster: "https://i.imgur.com/wCn5mg7.png", iron: "https://i.imgur.com/DitUGy3.png", master: "https://i.imgur.com/FChlRF0.png", platinum: "https://i.imgur.com/u0v3seS.png", silver: "https://i.imgur.com/oDqCBZw.png"}
-
+        var rank_colours = {bronze: "#795548", challenger: "#fafafa", diamond: "#9c27b0", gold: "#ffeb3b", grandmaster: "#f44336", iron: "#5d4037", master: "#8e24aa", platinum: "#81c784", silver: "#9e9e9e"}
+        
         if (tokens.length < 2) {
             message.channel.send("The correct usage of this command is: ```~rank (summoner name)``` **uwu**")
         } else {
@@ -95,8 +97,13 @@ client.on('message', message => {
                     //console.log(response)
                     for (var k=0; k<response.data.length; k++){
                         if(response.data[k].queueType == "RANKED_TFT"){
-                            var ret = "**"  + response.data[k].summonerName + "** is currently **" + response.data[k].tier + response.data[k].rank + " (" + response.data[k].leaguePoints + "lp)**"
-                            message.channel.send(ret, {files: [rank_images[(response.data[k].tier).toLowerCase()]]})
+                            embed.setTitle(response.data[k].summonerName)
+                            embed.setDescription(response.data[k].tier  + " " + response.data[k].rank + " (" + response.data[k].leaguePoints + "lp)", " ", true)
+                            embed.setImage(rank_images[(response.data[k].tier).toLowerCase()])
+                            embed.setColor(rank_colours[(response.data[k].tier).toLowerCase()])
+                            embed.setTimestamp()
+                            //var ret = "**"  + response.data[k].summonerName + "** is currently **" + response.data[k].tier + response.data[k].rank + " (" + response.data[k].leaguePoints + "lp)**"
+                            message.channel.send(embed)
                             return
                         }
                     }
