@@ -1,5 +1,5 @@
 const Discord = require('discord.js');
-const { prefix, token, mov_key } = require('./config.json');
+const { prefix, token, mov_key, riot_key } = require('./config.json');
 const client = new Discord.Client();
 const fs = require('fs')
 const axios = require('axios');
@@ -22,6 +22,11 @@ client.on('message', message => {
 
     if(message.content.startsWith(`${prefix}help`)){
         message.channel.send("The commands that are available are: ```uwu, random, rank, movie, recommend, cast, director```")
+        return
+    }
+
+    if(message.content.startsWith(`${prefix}pancake`)){
+        message.channel.send("**PANCAKE BOT SUCKS**")
         return
     }
     
@@ -66,33 +71,44 @@ client.on('message', message => {
     }
 
     if(message.content.startsWith(`${prefix}rank`)){
-        //source of data from lolchess.gg
-        if(tokens.length < 2){
+        //source of data from Riot Games API
+
+        var rank_images = {bronze: "https://i.imgur.com/HvxwGJf.png", challenger: "https://i.imgur.com/MiTQa19.png", diamond: "https://i.imgur.com/bOMBA1x.png", gold: "https://i.imgur.com/snwSOU5.png", grandmaster: "https://i.imgur.com/wCn5mg7.png", iron: "https://i.imgur.com/DitUGy3.png", master: "https://i.imgur.com/FChlRF0.png", platinum: "https://i.imgur.com/u0v3seS.png", silver: "https://i.imgur.com/oDqCBZw.png"}
+
+        if (tokens.length < 2) {
             message.channel.send("The correct usage of this command is: ```~rank (summoner name)``` **uwu**")
         } else {
-            var name = ""
-            for(var k=1; k<tokens.length;k++){
-                name += tokens[k]
+            var query = ""
+            for(var k = 1; k< tokens.length; k++){
+                if (k+1 == tokens.length){
+                    query += tokens[k]
+                } else {
+                    query += tokens[k] + "%20"
+                }
             }
 
-            var url = "https://lolchess.gg/profile/na/" + name
-            
-            axios.get(url).then(response => {
-                const $ = cheerio.load(response.data);
-                if(($('#search-not-found').html() == null)){
-                    if($('.no_tft_record').html() == null){
-                        var rank = $('.profile__tier__summary__tier').text()
-                        var lp = $('.profile__tier__summary__lp').text()
-                        message.channel.send(tokens[1] + " is currently: " + rank + " (" + lp +"). **uwu**")
-                    } else {
-                        message.channel.send(tokens[1] + "has not been placed yet. **uwu**")
+            axios.get('https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/' + query + '?api_key=' +  riot_key).then(function (response) {
+                //console.log(response)
+                //message.channel.send("Valid summoner")
+                var id = response.data.id
+                axios.get('https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/' + id + '?api_key=' + riot_key).then(function (response) {
+                    //console.log(response)
+                    for (var k=0; k<response.data.length; k++){
+                        if(response.data[k].queueType == "RANKED_TFT"){
+                            var ret = "**"  + response.data[k].summonerName + "** is currently **" + response.data[k].tier + response.data[k].rank + " (" + response.data[k].leaguePoints + "lp)**"
+                            message.channel.send(ret, {files: [rank_images[(response.data[k].tier).toLowerCase()]]})
+                            return
+                        }
                     }
-                } else {
-                    message.channel.send(token[1] + "does not exist. **uwu**")
-                }  
-            }).catch(error => {
-                console.log(error);
-            })
+                    
+                    
+                }).catch(function (error) {
+                    console.log(error)
+                    message.channel.send("Sorry an error has occurred when fetching the ranked data of " + query)
+                });
+            }).catch(function (error) {
+                message.channel.send("Sorry, " + query + " is not a valid summoner.")
+            });
         }
     return
     }
@@ -152,11 +168,15 @@ client.on('message', message => {
                     //use movie id to get recommendations
                     var img = "https://image.tmdb.org/t/p/w600_and_h900_bestv2" + response.data.results[0].backdrop_path
                     axios.get('https://api.themoviedb.org/3/movie/'+ response.data.results[0].id + '/recommendations?api_key='+ mov_key+'&language=en-US&page=1').then(function (response) {
-                        for(var k=0; k<5; k++){
-                            msg += (response.data.results[k].title) + "\n"
+                        if(response.data.results[0] != undefined){
+                            for(var k=0; k<5; k++){
+                                msg += (response.data.results[k].title) + "\n"
+                            }
+                            msg += "```"
+                            message.channel.send("I recommend:\n" + msg, {files : [img]})
+                        } else {
+                            message.channel.send("Oops, I don't know any recommendations for this movie.")
                         }
-                        msg += "```"
-                        message.channel.send("I recommend:\n" + msg, {files : [img]})
                     }).catch(function (error) {
                         console.log(error);
                     });
@@ -213,11 +233,11 @@ client.on('message', message => {
         }
     }
 
-    //Returns the top 5 
+    //Returns 5 movies directed by the director of the queried movie. 
     if(message.content.startsWith(`${prefix}director`)){
         //Uses TMDB API
         if(tokens.length < 2){
-            message.channel.send("The correct usage of this command is: ```~recommend (movie name)``` **uwu**")
+            message.channel.send("The correct usage of this command is: ```~director (movie name)``` **uwu**")
         } else {
             var query = ""
             console.log("tokens" + tokens)
@@ -276,6 +296,32 @@ client.on('message', message => {
             });
         }
     }
+
+    //Now playing (in Canada)
+    if(message.content.startsWith(`${prefix}showing`)){
+        //Uses TMDB API
+        if(tokens.length > 1){
+            message.channel.send("The correct usage of this command is: ```~showing (region)``` **uwu**")
+        } else {
+            axios.get('https://api.themoviedb.org/3/movie/now_playing?api_key=' + mov_key + '&language=en-US&page=1').then(function (response) {
+                console.log(response)
+                if(response.data.results[0] != undefined){
+                    console.log(response.data.results)
+                    var m = "__Movies Currently Showing:__ \n"
+                    for(var k=0; k< response.data.results.length; k++){
+                        m += "**" + response.data.results[k].title + "** (" + response.data.results[k].release_date.substring(5) + ")\n"
+                    }
+                    message.channel.send(m, {files: ["https://image.tmdb.org/t/p/w600_and_h900_bestv2" + response.data.results[0].poster_path]})
+                } else {
+                    message.channel.send("Sorry, couldn't find any showings. **uwu**")
+                }
+                
+            }).catch(function (error) {
+                console.log(error);
+            });
+        }
+    }
+
 })
 
 client.login(token);
