@@ -94,14 +94,21 @@ client.on('message', message => {
                 //message.channel.send("Valid summoner")
                 var id = response.data.id
                 axios.get('https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/' + id + '?api_key=' + riot_key).then(function (response) {
-                    //console.log(response)
+                    console.log(response)
+
+                    if (response.data.length == 0) {
+                        //has not played any games of tft yet
+                        embed.setTitle("Summoner has not placed in TFT yet.")
+                        embed.setColor("#ffffff")
+                        message.channel.send(embed)
+                    }
+
                     for (var k=0; k<response.data.length; k++){
                         if(response.data[k].queueType == "RANKED_TFT"){
                             embed.setTitle(response.data[k].summonerName)
                             embed.setDescription(response.data[k].tier  + " " + response.data[k].rank + " (" + response.data[k].leaguePoints + "lp)", " ", true)
                             embed.setImage(rank_images[(response.data[k].tier).toLowerCase()])
                             embed.setColor(rank_colours[(response.data[k].tier).toLowerCase()])
-                            embed.setTimestamp()
                             //var ret = "**"  + response.data[k].summonerName + "** is currently **" + response.data[k].tier + response.data[k].rank + " (" + response.data[k].leaguePoints + "lp)**"
                             message.channel.send(embed)
                             return
