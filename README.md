@@ -1,3 +1,5 @@
+# BOT IS CURRENTLY DISCONTINUED! SORRY
+
 # engbot
 A simple discord bot.
 
